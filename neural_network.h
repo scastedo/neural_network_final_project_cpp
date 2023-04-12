@@ -1,0 +1,1 @@
+// Implementation  of Inteface, Neuron, Layer (input, output and hidden), MLP Classes. Later monitoring and output
