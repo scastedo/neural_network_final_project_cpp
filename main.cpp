@@ -6,9 +6,11 @@
 
 int main()
 {
-    value a;
-    std::cout<<a.data()<< " "<< a.grad()<< " " << a.prev_node()<< " " <<a.prev_op() << std::endl;
-    a = value(5, 4, 2, "b","*");
-    std::cout<<a.data()<< " "<< a.grad()<< " " << a.prev_node()<< " " <<a.prev_op() << std::endl;
+    value a{5};
+    std::cout<<a.data()<< std::endl;
+    value b{2};
+    std::cout<<b.data()<< std::endl;
+    value c{a*b};
+    std::cout<<c.data()<< std::endl;
     return 0;
 }
