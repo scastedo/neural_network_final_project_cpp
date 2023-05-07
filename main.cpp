@@ -6,49 +6,22 @@
 
 int main()
 {
-    std::weak_ptr<value_graph> graph_1;
-    std::shared_ptr<value_graph> vg = std::make_shared<value_graph>();
-    graph_1 = vg;
-    value a{5,1, graph_1};
-    std::cout << "&&&&&&&&& a &&&&&&&&&&&" << std::endl;
-    std::cout << a << std::endl;
+    value a{2.0};
+    value b{-3.0};
+    value c{10.0};
+    value e{a*b};
+    value d{e+c};
+    value f{2.0};
+    value L{d*f};
+    L.backward();
 
-    value b{2, 1, graph_1};
-    std::cout << "&&&&&&&&& b &&&&&&&&&&&" << std::endl;
-    std::cout << b << std::endl;
-
-    value c{b};
-    std::cout << "&&&&&&&&& c = b &&&&&&&&&&&" << std::endl;
-    std::cout << c << std::endl;
-
-    std::cout << "&&&&&&&&& Child of c = b &&&&&&&&&&&" << std::endl;
-    for (const auto& val : c.get_children()) {
-        std::cout << *val << std::endl;
-    }
-    value d = a+b;
-    std::cout << "&&&&&&&&& d = a+b &&&&&&&&&&&" << std::endl;
-    std::cout << d << std::endl;
-    std::cout << "&&&&&&&&& child of d = a,b &&&&&&&&&&&" << std::endl;
-    for (const auto& val : d.get_children()) {
-        std::cout << *val << std::endl;
-    }
-
-    std::vector<std::shared_ptr<value>> values = vg->get_values();
-    std::cout << "Number of values in graph: " << values.size() << std::endl;
-    for (const auto& val : values) {
-        std::cout << *val << std::endl;
-    }
-
-        
-
-    // for (auto& v : vg->get_values()) {
-    //     std::cout << "Value: " << v->get_data() << std::endl;
-    //     std::cout << "Children: ";
-    //     for (auto& c : v->get_children()) {
-    //         std::cout << c.lock()->get_data() << " ";
-    //     }
-    //     std::cout << std::endl;
-    // }
-
+    std::cout << a << " | " << a.get_ptr() << "\n"
+              << b << " | " << b.get_ptr() << "\n"
+              << c << " | " << c.get_ptr() << "\n"
+              << d << " | " << d.get_ptr() << "\n"
+              << e << " | " << e.get_ptr() << "\n"
+              << f << " | " << f.get_ptr() << "\n"
+              << L << " | " << L.get_ptr() << "\n";
+    std::cout << "\n";
     return 0;
 }

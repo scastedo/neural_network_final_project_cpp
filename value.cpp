@@ -1,118 +1,254 @@
 #include "value.h"
-// Value Graph adding new vals
-void value_graph::add_value(const std::shared_ptr<value>& val)
+
+std::ostream & operator<<(std::ostream &os, const _value &val)
 {
-  _values.push_back(val);
-}
-void value_graph::remove_value(const std::shared_ptr<value>& val)
-{
-  _values.erase(std::remove(_values.begin(), _values.end(), val), _values.end());
+  os << "Value(" << val.get_data() << ", " << val.get_grad() << ")";
+  return os;
 }
 
-void value_graph::print_graph() const
+// parametrised constructor
+_value::_value(const double& d, const std::vector<std::shared_ptr<_value>>& parents):
+  _data{d}, _parents{parents}{}
+
+_value::_value(const double& d): _data{d}{}
+
+// RESETTING GRAD
+void _value::reset_all_grad()
 {
+  auto order = build_topo();
+  for (auto n=order.rbegin(); n!=order.rend(); ++n)
+      (*n)->reset_grad();
+}
+// TOPOLOGICAL SORT Directed acyclic graph
+std::vector<_value*> _value::build_topo()
+{
+    std::vector<_value*> sorted_nodes;
+    std::set<_value*> visited_nodes;
+    std::function<void(_value*)> _build_topo = [&](_value* node)
+    {
+        if (visited_nodes.find(node) != visited_nodes.end())
+            return;
 
-
-
+        visited_nodes.insert(node);
+        for (auto& parent_ptr : node->get_parents())
+            _build_topo(parent_ptr.get());
+        sorted_nodes.push_back(node);
+    };
+    _build_topo(this);
+    return sorted_nodes;
 }
 
-
-void value::add_children(const std::shared_ptr<value>& val)
+// ADDING LEARNING RATES
+void _value::descend_grad(const double& learning_rate)
+  {
+      _data -= learning_rate * _grad;
+  }
+// BACKPROPOGATION
+void _value::backward()
 {
-  _children.push_back(val);
-}
-void value::add_parents(const std::shared_ptr<value>& val)
-{
-  _parents.push_back(val);
+  auto order = build_topo();
+  // Set dx/dx=1
+  _grad = 1;
+  for (auto n=order.rbegin(); n!=order.rend(); ++n)
+      (*n)->_backward();
 }
 
-// Overload insertion to output stream for value
+/////////////////////////////
+/////////////////////////////
 std::ostream & operator<<(std::ostream &os, const value &val)
 {
   os << "Value(" << val.get_data() << ", " << val.get_grad() << ")";
   return os;
 }
 
-// Parametrised Constructor
-value::value(double d, double g, std::weak_ptr<value_graph> vg) :
-  _data{d} , _grad{g}, _graph{vg}
-{
-  if (auto graph = _graph.lock()) // check if weak_ptr is still valid
-  {
-    graph->add_value(std::shared_ptr<value>(this)); // add shared_ptr to the graph
-  }
+value pow(const value& val, const double& exp) { /// CHANGED FROM STANDARD ONE WITH WEAK POINTERS
+    auto out = value(std::pow(val.get_data(), exp), {val.get_ptr()});
+
+    std::weak_ptr<_value> val_weak_ptr = val.get_ptr();
+    std::weak_ptr<_value> out_weak_ptr = out.get_ptr();
+
+    auto _back = [=]() {
+        if(auto val_ptr = val_weak_ptr.lock()) {
+            val_ptr->get_grad() += (exp * std::pow(val_ptr->get_data(), exp - 1)) * out_weak_ptr.lock()->get_grad();
+        }
+    };
+    out.set_backward(_back);
+
+    return out;
 }
 
-
-// Copy Constructor
-value::value(value& other)
-{
-  _data = other.get_data();
-  _grad = other.get_grad();
-  _graph = other.get_graph();
-  other.add_parents(std::shared_ptr<value>(this)); 
-  _children.push_back(std::shared_ptr<value>(&other));  
-  if (auto vg = _graph.lock()) {
-      vg->add_value(std::shared_ptr<value>(this));
-  }
-}
-
-
-// Addition, subtraction and multiplication MAYBE DO A TEMPLATE OF THE BELOW ONES
-value value::operator+(value &other)
-{
-  double new_grad{1};
-  value new_object{get_data()+ other.get_data(), new_grad , _graph};
-  new_object.add_children(std::shared_ptr<value>(this)); // add a shared_ptr to this object to result's children vector
-  new_object.add_children(std::shared_ptr<value>(&other)); // add a shared_ptr to val object to result's children vector
-  other.add_parents(std::shared_ptr<value>(&new_object));
-  add_parents(std::shared_ptr<value>(&new_object));
-  if (auto vg = _graph.lock()) {
-      vg->add_value(std::shared_ptr<value>(&new_object));
-  }
-  return new_object;
-}
-value value::operator-(value &other)
-{
-  double new_grad{1};
-  value new_object{get_data()- other.get_data(), new_grad , _graph};
-  new_object.add_children(std::shared_ptr<value>(this)); // add a shared_ptr to this object to result's children vector
-  new_object.add_children(std::shared_ptr<value>(&other)); // add a shared_ptr to val object to result's children vector
-  other.add_parents(std::shared_ptr<value>(&new_object));
-  add_parents(std::shared_ptr<value>(&new_object));
-  if (auto vg = _graph.lock()) {
-      vg->add_value(std::shared_ptr<value>(&new_object));
-  }
-  return new_object;
-}
-value value::operator*(value &other)
-{
-  double new_grad{1};
-  value new_object{get_data()* other.get_data(), new_grad , _graph};
-  new_object.add_children(std::shared_ptr<value>(this)); // add a shared_ptr to this object to result's children vector
-  new_object.add_children(std::shared_ptr<value>(&other)); // add a shared_ptr to val object to result's children vector
-  other.add_parents(std::shared_ptr<value>(&new_object));
-  add_parents(std::shared_ptr<value>(&new_object));
-  if (auto vg = _graph.lock()) {
-      vg->add_value(std::shared_ptr<value>(&new_object));
-  }
-  return new_object;
-}
-
-// Copy  Assignment operator
-value & value::operator=(value &other)
+value::value(const double& data, const std::vector<std::shared_ptr<_value>>& parents): 
+  _ptr{std::make_shared<_value>(data, parents)}{}
+value::value(const double& d): _ptr{std::make_shared<_value>(d)}{}
+value::value(const value& other): _ptr{other._ptr}{}
+value::value(value&& other): _ptr{other._ptr}{other._ptr = nullptr;}
+value & value::operator=(const value &other)
 {
   if (&other == this) return *this;
-  _data = other.get_data();
-  _grad = other.get_grad();
-  _graph = other.get_graph();
-  _children.clear();
-  _children.push_back(std::shared_ptr<value>(&other));
-  other.add_parents(std::shared_ptr<value>(this)); 
-
-  if (auto vg = _graph.lock()) {
-      vg->add_value(std::shared_ptr<value>(this));
-  }
-
+  _ptr = other._ptr;
   return *this;
+}
+value& value::operator=(value&& other)
+{
+  std::swap(_ptr, other._ptr);
+  return *this;
+}
+
+
+value value::operator+(const value& other) const /// CHANGED FROM STANDARD ONE WITH WEAK POINTERS
+{
+    value out(
+        get_data() + other.get_data(),
+        {get_ptr(), other.get_ptr()}
+    );
+
+    // _value* this_ptr = get_ptr().get();
+    // _value* other_ptr = other.get_ptr().get();
+    // _value* out_ptr = out.get_ptr().get();
+    // auto _back = [=]()
+    // {
+    //     this_ptr->get_grad() += other_ptr->get_data() * out_ptr->get_grad();
+    //     other_ptr->get_grad() += this_ptr->get_data() * out_ptr->get_grad();
+    // };
+
+    std::weak_ptr<_value> this_weak_ptr = get_ptr();
+    std::weak_ptr<_value> other_weak_ptr = other.get_ptr();
+    std::weak_ptr<_value> out_weak_ptr = out.get_ptr();
+    auto _back = [=]() 
+    {    // Lambda closure only contains weak pointers
+        if(auto this_ptr = this_weak_ptr.lock()) {
+            this_ptr->get_grad() += other_weak_ptr.lock()->get_data() * out_weak_ptr.lock()->get_grad();
+        }
+        if(auto other_ptr = other_weak_ptr.lock()) {
+            other_ptr->get_grad() += this_weak_ptr.lock()->get_data() * out_weak_ptr.lock()->get_grad();
+        }
+    };
+
+    out.set_backward(_back);
+    return out;
+}
+
+value value::operator+(const double& other) const
+    {
+        auto temp = value(other);
+        return operator+(temp);
+    }
+
+value value::operator-(const value& other) const /// CHANGED FROM STANDARD ONE WITH WEAK POINTERS
+{
+    auto out = value(
+        get_data() - other.get_data(),
+        {get_ptr(), other.get_ptr()}
+    );
+    
+    // _value* this_ptr = get_ptr().get();
+    // _value* other_ptr = other.get_ptr().get();
+    // _value* out_ptr = out.get_ptr().get();
+    // auto _back = [=]()
+    // {
+    //     this_ptr->get_grad() += other_ptr->get_data() * out_ptr->get_grad();
+    //     other_ptr->get_grad() += this_ptr->get_data() * out_ptr->get_grad();
+    // };
+
+    std::weak_ptr<_value> this_weak_ptr = get_ptr();
+    std::weak_ptr<_value> other_weak_ptr = other.get_ptr();
+    std::weak_ptr<_value> out_weak_ptr = out.get_ptr();
+    auto _back = [=]() 
+    {    // Lambda closure only contains weak pointers
+        if(auto this_ptr = this_weak_ptr.lock()) {
+            this_ptr->get_grad() += other_weak_ptr.lock()->get_data() * out_weak_ptr.lock()->get_grad();
+        }
+        if(auto other_ptr = other_weak_ptr.lock()) {
+            other_ptr->get_grad() += this_weak_ptr.lock()->get_data() * out_weak_ptr.lock()->get_grad();
+        }
+    };
+
+    out.set_backward(_back);
+    return out;
+}
+
+value value::operator-(const double& other) const
+{
+    auto temp = value(other);
+    return operator-(temp);
+}
+
+value value::operator*(const value& other) const/// CHANGED FROM STANDARD ONE WITH WEAK POINTERS
+{
+    auto out = value(
+        get_data() * other.get_data(),
+        {get_ptr(), other.get_ptr()}
+    );
+
+    // _value* this_ptr = get_ptr().get();
+    // _value* other_ptr = other.get_ptr().get();
+    // _value* out_ptr = out.get_ptr().get();
+    // auto _back = [=]()
+    // {
+    //     this_ptr->get_grad() += other_ptr->get_data() * out_ptr->get_grad();
+    //     other_ptr->get_grad() += this_ptr->get_data() * out_ptr->get_grad();
+    // };
+
+    std::weak_ptr<_value> this_weak_ptr = get_ptr();
+    std::weak_ptr<_value> other_weak_ptr = other.get_ptr();
+    std::weak_ptr<_value> out_weak_ptr = out.get_ptr();
+    auto _back = [=]() 
+    {    // Lambda closure only contains weak pointers
+        if(auto this_ptr = this_weak_ptr.lock()) {
+            this_ptr->get_grad() += other_weak_ptr.lock()->get_data() * out_weak_ptr.lock()->get_grad();
+        }
+        if(auto other_ptr = other_weak_ptr.lock()) {
+            other_ptr->get_grad() += this_weak_ptr.lock()->get_data() * out_weak_ptr.lock()->get_grad();
+        }
+    };
+    out.set_backward(_back);
+    return out;
+}
+
+value value::operator*(const double& other) const
+{
+    auto temp = value(other);
+    return operator*(temp);
+}
+
+value value::operator/(const value& other) const
+{
+    auto temp = pow(other, -1);
+    return operator*(temp);
+}
+
+value value::operator/(const double& other) const
+{
+    auto temp = value(other);
+    return operator/(temp);
+}
+
+value value::operator-()
+{
+    return operator*(-1);
+}
+
+bool value::operator==(const value& other) const
+{
+    return get_data() == other.get_data();
+}
+
+bool value::operator<(const value& other) const
+{
+    return get_data() < other.get_data();
+}
+
+bool value::operator>(const value& other) const
+{
+    return get_data() > other.get_data();
+}
+
+bool value::operator<=(const value& other) const
+{
+    return get_data() <= other.get_data();
+}
+
+bool value::operator>=(const value& other) const
+{
+    return get_data() >= other.get_data();
 }
