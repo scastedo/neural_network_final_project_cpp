@@ -10,7 +10,7 @@ int main()
     value b{-3.0};
     value c{10.0};
     value e{a*b};
-    value d{e+c};
+    value d{e/c};
     value f{2.0};
     value L{d*f};
     L.backward();

@@ -1,5 +1,10 @@
 #include "value.h"
 
+/////////////////////////////
+/////////////////////////////
+//////// Private Value //////
+/////////////////////////////
+
 std::ostream & operator<<(std::ostream &os, const _value &val)
 {
   os << "Value(" << val.get_data() << ", " << val.get_grad() << ")";
@@ -55,40 +60,26 @@ void _value::backward()
 
 /////////////////////////////
 /////////////////////////////
+////////  Public Value //////
+/////////////////////////////
 std::ostream & operator<<(std::ostream &os, const value &val)
 {
   os << "Value(" << val.get_data() << ", " << val.get_grad() << ")";
   return os;
 }
-
-value pow(const value& val, const double& exp) { /// CHANGED FROM STANDARD ONE WITH WEAK POINTERS
-    auto out = value(std::pow(val.get_data(), exp), {val.get_ptr()});
-
-    std::weak_ptr<_value> val_weak_ptr = val.get_ptr();
-    std::weak_ptr<_value> out_weak_ptr = out.get_ptr();
-
-    auto _back = [=]() {
-        if(auto val_ptr = val_weak_ptr.lock()) {
-            val_ptr->get_grad() += (exp * std::pow(val_ptr->get_data(), exp - 1)) * out_weak_ptr.lock()->get_grad();
-        }
-    };
-    out.set_backward(_back);
-
-    return out;
-}
-
-value::value(const double& data, const std::vector<std::shared_ptr<_value>>& parents): 
+// Constructors
+value::value(const double& data, const std::vector<std::shared_ptr<_value>>& parents): // Private constructor
   _ptr{std::make_shared<_value>(data, parents)}{}
-value::value(const double& d): _ptr{std::make_shared<_value>(d)}{}
-value::value(const value& other): _ptr{other._ptr}{}
-value::value(value&& other): _ptr{other._ptr}{other._ptr = nullptr;}
-value & value::operator=(const value &other)
+value::value(const double& d): _ptr{std::make_shared<_value>(d)}{} //Public constructor
+value::value(const value& other): _ptr{other._ptr}{} //copy constructor
+value::value(value&& other): _ptr{other._ptr}{other._ptr = nullptr;} //move constructor
+value & value::operator=(const value &other) //Copy assignment
 {
   if (&other == this) return *this;
   _ptr = other._ptr;
   return *this;
 }
-value& value::operator=(value&& other)
+value& value::operator=(value&& other) //move assignment
 {
   std::swap(_ptr, other._ptr);
   return *this;
@@ -97,10 +88,7 @@ value& value::operator=(value&& other)
 
 value value::operator+(const value& other) const /// CHANGED FROM STANDARD ONE WITH WEAK POINTERS
 {
-    value out(
-        get_data() + other.get_data(),
-        {get_ptr(), other.get_ptr()}
-    );
+    value out(get_data() + other.get_data(), {get_ptr(), other.get_ptr()}); // adds values and adds parents 
 
     // _value* this_ptr = get_ptr().get();
     // _value* other_ptr = other.get_ptr().get();
@@ -111,6 +99,7 @@ value value::operator+(const value& other) const /// CHANGED FROM STANDARD ONE W
     //     other_ptr->get_grad() += this_ptr->get_data() * out_ptr->get_grad();
     // };
 
+    //Setting up the backward function for later use
     std::weak_ptr<_value> this_weak_ptr = get_ptr();
     std::weak_ptr<_value> other_weak_ptr = other.get_ptr();
     std::weak_ptr<_value> out_weak_ptr = out.get_ptr();
@@ -123,12 +112,11 @@ value value::operator+(const value& other) const /// CHANGED FROM STANDARD ONE W
             other_ptr->get_grad() += this_weak_ptr.lock()->get_data() * out_weak_ptr.lock()->get_grad();
         }
     };
-
     out.set_backward(_back);
     return out;
 }
 
-value value::operator+(const double& other) const
+value value::operator+(const double& other) const //both r and lvalue allowed :)
     {
         auto temp = value(other);
         return operator+(temp);
@@ -136,10 +124,7 @@ value value::operator+(const double& other) const
 
 value value::operator-(const value& other) const /// CHANGED FROM STANDARD ONE WITH WEAK POINTERS
 {
-    auto out = value(
-        get_data() - other.get_data(),
-        {get_ptr(), other.get_ptr()}
-    );
+    auto out = value(get_data() - other.get_data(), {get_ptr(), other.get_ptr()});
     
     // _value* this_ptr = get_ptr().get();
     // _value* other_ptr = other.get_ptr().get();
@@ -175,10 +160,7 @@ value value::operator-(const double& other) const
 
 value value::operator*(const value& other) const/// CHANGED FROM STANDARD ONE WITH WEAK POINTERS
 {
-    auto out = value(
-        get_data() * other.get_data(),
-        {get_ptr(), other.get_ptr()}
-    );
+    auto out = value(get_data() * other.get_data(),{get_ptr(), other.get_ptr()});
 
     // _value* this_ptr = get_ptr().get();
     // _value* other_ptr = other.get_ptr().get();

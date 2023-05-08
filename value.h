@@ -63,7 +63,24 @@ class _value
 class value
 { 
   friend std::ostream& operator<<(std::ostream& os, const value&);
-  friend value pow(const value&,  const double&);
+  // Scalar power 
+  friend value pow(const value& val,  const double& exp_term)
+  {
+    auto out = value(std::pow(val.get_data(), exp_term), {val.get_ptr()});
+
+    std::weak_ptr<_value> val_weak_ptr = val.get_ptr();
+    std::weak_ptr<_value> out_weak_ptr = out.get_ptr();
+
+    auto _back = [=]() {
+        if(auto val_ptr = val_weak_ptr.lock()) {
+            val_ptr->get_grad() += (exp_term * std::pow(val_ptr->get_data(), exp_term - 1)) * out_weak_ptr.lock()->get_grad();
+        }
+    };
+    out.set_backward(_back);
+    return out;
+  }
+    
+  // Scalar arithmatic
   friend value operator+(double num, const value& val) {return val + num;}
   friend value operator-(double num, const value& val) {return val - num;}
   friend value operator*(double num, const value& val) {return val * num;}
@@ -71,7 +88,7 @@ class value
 
   private:
    std::shared_ptr<_value> _ptr = nullptr;
-   value(const double&, const std::vector<std::shared_ptr<_value>>&);
+   value(const double&, const std::vector<std::shared_ptr<_value>>&); // Private parametric constructor accessed by arithmetic to add parents
   public:
     // constructors(param and default, copy and move), destructors, 
    value() {_ptr = std::make_shared<_value>(0);} // default
