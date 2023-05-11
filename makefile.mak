@@ -10,10 +10,10 @@ OBJS = $(SRCS:.cpp=.o) # fichiers objets
 a.out : $(OBJS)
 	$(CPPC) $(OBJS)
 
-value.o: value.cpp value.h neural_network.h optimiser.h
+value.o: value.cpp value.h autodiff.h model.h optimiser.h curve_fitter.h
 	$(CPPC) -c $(CFLAGS) $<
 		
-main.o: main.cpp value.h neural_network.h optimiser.h
+main.o: main.cpp value.h autodiff.h model.h optimiser.h curve_fitter.h
 	$(CPPC) -c $(CFLAGS) $<
 
 # Exemples de règles pour le ménage

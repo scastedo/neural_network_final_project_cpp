@@ -95,8 +95,8 @@ value value::operator+(const value& other) const /// CHANGED FROM STANDARD ONE W
     // _value* out_ptr = out.get_ptr().get();
     // auto _back = [=]()
     // {
-    //     this_ptr->get_grad() += other_ptr->get_data() * out_ptr->get_grad();
-    //     other_ptr->get_grad() += this_ptr->get_data() * out_ptr->get_grad();
+    //     this_ptr->get_grad() += out_ptr->get_grad();
+    //     other_ptr->get_grad() +=  out_ptr->get_grad();
     // };
 
     //Setting up the backward function for later use
@@ -106,10 +106,10 @@ value value::operator+(const value& other) const /// CHANGED FROM STANDARD ONE W
     auto _back = [=]() 
     {    // Lambda closure only contains weak pointers
         if(auto this_ptr = this_weak_ptr.lock()) {
-            this_ptr->get_grad() += other_weak_ptr.lock()->get_data() * out_weak_ptr.lock()->get_grad();
+            this_ptr->get_grad() +=  out_weak_ptr.lock()->get_grad();
         }
         if(auto other_ptr = other_weak_ptr.lock()) {
-            other_ptr->get_grad() += this_weak_ptr.lock()->get_data() * out_weak_ptr.lock()->get_grad();
+            other_ptr->get_grad() +=  out_weak_ptr.lock()->get_grad();
         }
     };
     out.set_backward(_back);
@@ -131,8 +131,8 @@ value value::operator-(const value& other) const /// CHANGED FROM STANDARD ONE W
     // _value* out_ptr = out.get_ptr().get();
     // auto _back = [=]()
     // {
-    //     this_ptr->get_grad() += other_ptr->get_data() * out_ptr->get_grad();
-    //     other_ptr->get_grad() += this_ptr->get_data() * out_ptr->get_grad();
+    //     this_ptr->get_grad() += out_ptr->get_grad();
+    //     other_ptr->get_grad() += out_ptr->get_grad();
     // };
 
     std::weak_ptr<_value> this_weak_ptr = get_ptr();
@@ -141,10 +141,10 @@ value value::operator-(const value& other) const /// CHANGED FROM STANDARD ONE W
     auto _back = [=]() 
     {    // Lambda closure only contains weak pointers
         if(auto this_ptr = this_weak_ptr.lock()) {
-            this_ptr->get_grad() += other_weak_ptr.lock()->get_data() * out_weak_ptr.lock()->get_grad();
+            this_ptr->get_grad() += out_weak_ptr.lock()->get_grad();
         }
         if(auto other_ptr = other_weak_ptr.lock()) {
-            other_ptr->get_grad() += this_weak_ptr.lock()->get_data() * out_weak_ptr.lock()->get_grad();
+            other_ptr->get_grad() += out_weak_ptr.lock()->get_grad();
         }
     };
 

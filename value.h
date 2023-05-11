@@ -1,15 +1,12 @@
 #ifndef VAL_H
 #define VAL_H
+#include<iostream>
 #include<cmath>
 #include<vector>
-#include<iostream>
-#include<memory>
-#include<sstream>
-#include<iomanip>
-#include<algorithm>
-#include<unordered_map>
-#include<queue>
+#include<utility>
+#include<functional>
 #include<set>
+#include<memory>
 // Value Class for scalar autograd engine
 
 // forward declarations
@@ -29,6 +26,7 @@ class _value
     std::function<void()> _backward = [](){return;};
 
   public:
+  // can make constructors private???????????????????????????????
   // Constructors
   _value(const double&, const std::vector<std::shared_ptr<_value>>&); //param construct
   _value(const double&); //annother param construct
@@ -78,6 +76,18 @@ class value
     };
     out.set_backward(_back);
     return out;
+    // auto out = value(std::pow(val.get_data(), exp_term), {val.get_ptr(),});
+
+    // _value* val_ptr = val.get_ptr().get();
+    // _value* out_ptr = out.get_ptr().get();
+
+    // auto _back = [=]()
+    // {
+    //     val_ptr->get_grad() += (exp_term * std::pow(val_ptr->get_data(), exp_term- 1)) * out_ptr->get_grad();
+    // };
+    // out.set_backward(_back);
+
+    // return out;
   }
     
   // Scalar arithmatic
