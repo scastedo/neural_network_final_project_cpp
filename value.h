@@ -131,12 +131,22 @@ class value
     // Operations
     value operator+(const value&) const;
     value operator+(const double&) const;
+    value operator+=(const value&);
+    value operator+=(const double&);
+
     value operator-(const value&) const;
     value operator-(const double&) const;
+    value operator-=(const value&);
+    value operator-=(const double&);
+
     value operator*(const value&) const;
     value operator*(const double&) const;
+    value operator*=(const value&);
+    value operator*=(const double&);
     value operator/(const value&) const;
     value operator/(const double&) const;
+    value operator/=(const value&);
+    value operator/=(const double&);
     value operator-();
 
     // Comparison operators

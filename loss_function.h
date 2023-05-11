@@ -4,10 +4,11 @@
 #include "value.h"
 
 template <typename T>
-class ILossFunction {
-public:
-    virtual ~ILossFunction() = default;
-    virtual value operator()(const value& model_output, const T& target) const = 0;
+class ILossFunction
+{
+    public:
+        virtual ~ILossFunction() = default;
+        virtual value operator()(const value& model_output, const T& target) const = 0;
 };
 
 template <typename T=double>
@@ -21,5 +22,4 @@ class RMSE: public ILossFunction<T>
             return (diff*diff);
         }
 };
-
 #endif

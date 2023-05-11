@@ -6,6 +6,8 @@
 #include "loss_function.h"
 #include "optimiser.h"
 #include "model.h"
+#include "io.h"
+#include "curve_fit.h"
 // #include "likelihood_interface.h"
 
 // int main()
@@ -27,14 +29,7 @@
 //               << f << " | " << f.get_ptr() << "\n"
 //               << L << " | " << L.get_ptr() << "\n";
 //     std::cout << "\n";
-//     return 0;
-// }
-
-
-// int main()
-// {
-    
-//     // Want to implement 2x^2 +3x +1
+// Want to implement 2x^2 +3x +1
 
 //     value a{3};
 //     value b{2*pow(a,2)+3*a+1};
@@ -48,20 +43,22 @@
 //     // value x(1.0);
 //     // value derivative = AutoDiff::compute_derivative(quad_func, x);
 //     // std::cout << "Derivative of the function at x = " << x.get_data() << " is " << derivative.get_data() << std::endl;
-
 //     return 0;
 // }
-
 int main()
 {
-    const std::vector<double> inputs = {1,2,3,4,5};
-    const std::vector<double> targets = {1.5,4.2,9.3,15.8,25.1};
+    CSVDataIO csvIO;
+    std::pair<std::vector<double>, std::vector<double>> importedData = csvIO.importDataFromSource();
+    std::vector<double>& inputs = importedData.first;
+    std::vector<double>& targets = importedData.second;
+    // const std::vector<double> inputs = {1,2,3,4,5};
+    // const std::vector<double> targets = {1.5,4.2,9.3,15.8,25.1};
     
-    auto loss_func = std::make_shared<RMSE<>>();
-    auto model = std::make_shared<PolynomialModel<double>>(3); 
-    std::vector<value> initial_params(model->num_params(), value{1});
-    size_t max_iterations = 1000;
-    double learning_rate = 0.1;
+    auto loss_func = std::make_shared<RMSE<>>(); // Define Loss Function
+    auto model = std::make_shared<PolynomialModel<double>>(2); // Define Model used
+    std::vector<value> initial_params(model->num_params(), value{1}); //Generate Initial parameters
+    size_t max_iterations = 2000; // Hyper parameter
+    double learning_rate = 0.1; // Hyper parameter
 
     for (size_t i=0; i<inputs.size();i++)
     {
@@ -69,8 +66,10 @@ int main()
         std::cout<< initial_model <<std::endl;
     }    
 
-    CurveFitter<double> curve_fitter(inputs, targets, model, loss_func);   
-    std::vector<value> optimized_params = curve_fitter.adam_fit(initial_params, max_iterations, learning_rate);
+    std::shared_ptr<AdamFit<double>> adam_method = std::make_shared<AdamFit<double>>();
+    CurveFitter<double> curve_fitter(inputs, targets, model, loss_func, adam_method);   
+    std::vector<value> optimized_params = curve_fitter.fit(initial_params, max_iterations, learning_rate);
+
 
 
     for (const auto& param : optimized_params)
@@ -86,29 +85,3 @@ int main()
     }  
     return 0;
 }
-
-
-// int main()
-// {
-//     // Define the custom likelihood function using a lambda
-//     auto likelihood_function = [](const std::vector<double>& position, const std::vector<double>& data) {
-//         // Calculate and return the likelihood value based on position and data
-//     };
-
-//     auto likelihood = std::make_shared<LikelihoodInterface>(likelihood_function);
-
-//     // Choose the integration method
-//     double step_size = 0.1;
-//     size_t num_leapfrog_steps = 10;
-//     auto integration_method = std::make_shared<LeapfrogIntegrator>(step_size, num_leapfrog_steps);
-
-//     // Import data
-//     std::vector<double> data = {/*...*/};
-
-//     // Create the AD_HMC_Sampler object
-//     ad_hmc_sampler sampler(likelihood, integration_method, data, step_size);
-
-//     // Run the HMC algorithm and get samples
-//     // ...
-    
-// }

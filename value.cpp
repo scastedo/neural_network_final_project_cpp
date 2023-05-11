@@ -116,11 +116,23 @@ value value::operator+(const value& other) const /// CHANGED FROM STANDARD ONE W
     return out;
 }
 
-value value::operator+(const double& other) const //both r and lvalue allowed :)
-    {
-        auto temp = value(other);
-        return operator+(temp);
-    }
+value value::operator+(const double& other) const 
+{
+    auto temp = value(other);
+    return operator+(temp);
+}
+value value::operator+=(const value& other)
+{
+    *this = *this + other;
+    return *this;
+}
+value value::operator+=(const double& other)
+{
+    auto temp = value(other);
+    *this = *this + temp;
+    return *this;
+}
+
 
 value value::operator-(const value& other) const /// CHANGED FROM STANDARD ONE WITH WEAK POINTERS
 {
@@ -157,6 +169,17 @@ value value::operator-(const double& other) const
     auto temp = value(other);
     return operator-(temp);
 }
+value value::operator-=(const value& other)
+{
+    *this = *this - other;
+    return *this;
+}
+value value::operator-=(const double& other)
+{
+    auto temp = value(other);
+    *this = *this - temp;
+    return *this;
+}
 
 value value::operator*(const value& other) const/// CHANGED FROM STANDARD ONE WITH WEAK POINTERS
 {
@@ -192,7 +215,17 @@ value value::operator*(const double& other) const
     auto temp = value(other);
     return operator*(temp);
 }
-
+value value::operator*=(const value& other)
+{
+    *this = *this * other;
+    return *this;
+}
+value value::operator*=(const double& other)
+{
+    auto temp = value(other);
+    *this = *this * temp;
+    return *this;
+}
 value value::operator/(const value& other) const
 {
     auto temp = pow(other, -1);
@@ -204,6 +237,18 @@ value value::operator/(const double& other) const
     auto temp = value(other);
     return operator/(temp);
 }
+value value::operator/=(const value& other)
+{
+    *this = *this / other;
+    return *this;
+}
+value value::operator/=(const double& other)
+{
+    auto temp = value(other);
+    *this = *this / temp;
+    return *this;
+}
+
 
 value value::operator-()
 {

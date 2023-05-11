@@ -8,6 +8,7 @@ public:
   virtual ~IModel() = default;
   virtual value operator()(const std::vector<value>& params, const T& input) const = 0;
   virtual size_t num_params() const = 0;
+  
 };
 
 template <typename T>
@@ -21,8 +22,8 @@ public:
     value term{1};
     for (size_t j = 0; j <= degree_; j++)
     {
-      result = result + params[j] * term;
-      term = term * input_val;
+      result += params[j] * term;
+      term *= input_val;
     }
     return result;
   }
