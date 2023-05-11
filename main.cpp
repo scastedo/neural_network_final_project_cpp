@@ -3,10 +3,9 @@
 // Sebastian Castedo 12 April 2023 
 
 #include "value.h"
-#include "autodiff.h"
-#include "curve_fitter.h"
-#include "model.h"
+#include "loss_function.h"
 #include "optimiser.h"
+#include "model.h"
 // #include "likelihood_interface.h"
 
 // int main()
@@ -57,34 +56,34 @@ int main()
 {
     const std::vector<double> inputs = {1,2,3,4,5};
     const std::vector<double> targets = {1.5,4.2,9.3,15.8,25.1};
-    const std::vector<value> initial_params = {value{1}, value{2}, value{3}, value{2}}; // Initial parameters for the quadratic model
-    // int number{5};
-    PolynomialModel<double> model(3);  
-    // for (size_t i; i<number;i++){
-    //     value temp{1};
-    //     initial_params.push_back(temp);
-    // }
-     
-    for (size_t i=0; i<inputs.size();i++){
-        value model_check =  model(initial_params, inputs[i]);
-        std::cout<< model_check <<std::endl;
-    }   
-    RMSE loss_func;
     
+    auto loss_func = std::make_shared<RMSE<>>();
+    auto model = std::make_shared<PolynomialModel<double>>(3); 
+    std::vector<value> initial_params(model->num_params(), value{1});
     size_t max_iterations = 1000;
     double learning_rate = 0.1;
-    CurveFitter<double, PolynomialModel<double>, RMSE> curve_fitter(inputs, targets, model, loss_func);   
+
+    for (size_t i=0; i<inputs.size();i++)
+    {
+        value initial_model =  (*model)(initial_params, inputs[i]);
+        std::cout<< initial_model <<std::endl;
+    }    
+
+    CurveFitter<double> curve_fitter(inputs, targets, model, loss_func);   
     std::vector<value> optimized_params = curve_fitter.adam_fit(initial_params, max_iterations, learning_rate);
 
-    for (const auto& param : optimized_params) {
+
+    for (const auto& param : optimized_params)
+    {
         std::cout << param.get_data() << ' ';
     }
     std::cout << std::endl;
 
-    for (size_t i=0; i<inputs.size();i++){
-        value model_check =  model(optimized_params, inputs[i]);
+    for (size_t i=0; i<inputs.size();i++)
+    {
+        value model_check =  (*model)(optimized_params, inputs[i]);
         std::cout<< model_check <<std::endl;
-    }    
+    }  
     return 0;
 }
 

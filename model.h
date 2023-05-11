@@ -3,15 +3,15 @@
 #include "value.h"
 
 template <typename T>
-class Model {
+class IModel {
 public:
-  virtual ~Model() = default;
-
+  virtual ~IModel() = default;
   virtual value operator()(const std::vector<value>& params, const T& input) const = 0;
+  virtual size_t num_params() const = 0;
 };
 
 template <typename T>
-class PolynomialModel : public Model<T> {
+class PolynomialModel : public IModel<T> {
 public:
   PolynomialModel(size_t degree) : degree_(degree) {}
 
@@ -19,7 +19,6 @@ public:
     value result{0};
     value input_val{static_cast<double>(input)};
     value term{1};
-    // Calculate the polynomial value using the given parameters and input
     for (size_t j = 0; j <= degree_; j++)
     {
       result = result + params[j] * term;
@@ -27,11 +26,12 @@ public:
     }
     return result;
   }
+  size_t num_params() const override {
+    return degree_ + 1;
+  }
 
 private:
   size_t degree_;
 };
-
-
 
 #endif
