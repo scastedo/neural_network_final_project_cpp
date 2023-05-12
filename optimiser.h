@@ -24,7 +24,6 @@ class IFitMethod
         {
             last_percentage = current_percentage;
             size_t boxes = (current * bar_length) / total;
-
             std::cout << "\r[";
             for (size_t i = 0; i < bar_length; ++i)
             {
@@ -35,14 +34,16 @@ class IFitMethod
                     std::cout << " ";
                 }
             }
-          std::cout << "] " << std::fixed << std::setprecision(2) << (100.0 * current) / total << "%" <<  " | Current Loss: " << loss << std::flush;
+          std::cout << "] " << std::fixed << std::setprecision(2) << current_percentage << "%" <<  " | Current Loss: " << loss << std::flush;
         }
         if (current == total)
         {
           std::cout<< std::endl;
+          std::cout<< std::endl;
           std::cout<< "********************" << std::endl;
-          std::cout<< "****COMPLETED!!!****" << std::endl;
+          std::cout<< "****FIT COMPLETE****" << std::endl;
           std::cout<< "********************" << std::endl;
+          std::cout<< std::endl;
         }
       }
 };

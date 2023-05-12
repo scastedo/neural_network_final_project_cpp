@@ -89,6 +89,37 @@ class value
 
     // return out;
   }
+  friend value exp(const value& val)
+  {
+    auto out = value(std::exp(val.get_data()), {val.get_ptr()});
+
+    std::weak_ptr<_value> val_weak_ptr = val.get_ptr();
+    std::weak_ptr<_value> out_weak_ptr = out.get_ptr();
+
+    auto _back = [=]() {
+        if(auto val_ptr = val_weak_ptr.lock()) {
+            val_ptr->get_grad() += std::exp(val_ptr->get_data()) * out_weak_ptr.lock()->get_grad();
+        }
+    };
+    out.set_backward(_back);
+    return out;
+  }
+  // Natural Logarithm function
+friend value log(const value& val)
+{
+  auto out = value(std::log(val.get_data()), {val.get_ptr()});
+
+  std::weak_ptr<_value> val_weak_ptr = val.get_ptr();
+  std::weak_ptr<_value> out_weak_ptr = out.get_ptr();
+
+  auto _back = [=]() {
+      if(auto val_ptr = val_weak_ptr.lock()) {
+          val_ptr->get_grad() += (1.0 / val_ptr->get_data()) * out_weak_ptr.lock()->get_grad();
+      }
+  };
+  out.set_backward(_back);
+  return out;
+}
     
   // Scalar arithmatic
   friend value operator+(double num, const value& val) {return val + num;}
