@@ -1,32 +1,60 @@
 #ifndef CURV_H
 #define CURV_H
-#include "loss_function.h"
-#include "optimiser.h"
-
-template <typename T = double>
-class IOptimizer
-{
-  public:
-      virtual std::vector<value> fit(const std::vector<value>& initial_params, size_t iterations, double learning_rate) = 0;
-};
-
-template <typename T = double>
-class CurveFitter: public IOptimizer<T>
-{
-  public:
-    CurveFitter(const std::vector<T>& inputs, const std::vector<T>& targets, std::shared_ptr<IModel<T>> model, std::shared_ptr<ILossFunction<T>> loss_function, std::shared_ptr<IFitMethod<T>> fit_method)
-      : inputs_(inputs), targets_(targets), model_(model), loss_function_(loss_function), fit_method_(fit_method) {}
-
-    std::vector<value> fit(const std::vector<value>& initial_params, size_t max_iterations, double learning_rate) override
+template <typename LossFunc, typename Model, typename Optimiser>
+class CurveFitProgram {
+public:
+  CurveFitProgram(size_t iter, double lr) : 
+    loss_func(std::make_shared<LossFunc>()),
+    model(std::make_shared<Model>()),
+    optimiser(std::make_shared<Optimiser>()),
+    max_iterations(iter),
+    learning_rate(lr)
     {
-      return fit_method_->fit(initial_params, max_iterations, learning_rate, inputs_, targets_, model_, loss_function_);
+        if (max_iterations <= 0 || learning_rate <= 0) {
+            throw std::invalid_argument("Invalid parameters for CurveFitProgram");
+        }
+    }
+    void run() {
+        importData();
+        initialiseParams();
+        fitCurve();
+        exportData();
+    }
+    void importData() {
+        std::pair<std::vector<double>, std::vector<double>> importedData = csvIO.importDataFromSource();
+        inputs = importedData.first;
+        targets = importedData.second;
+    }
+    void testData(){
+      inputs = {1,2,3,4,5};
+      targets = {1.5,4.2,9.3,15.8,25.1};
+    }
+
+    void initialiseParams() {
+        initial_params.resize(model->num_params(), value{1});
+        std::cout << "============================================" << std::endl;
+        std::cout << "Initial Representation: " << model->representation(initial_params) <<std::endl <<std::endl;
+        csvIO.outputData(model->output_model(initial_params, inputs), targets);
+    }
+
+    void fitCurve() {
+        optimised_params = optimiser->fit(initial_params, max_iterations, learning_rate, inputs, targets, model, loss_func);
+        std::cout<< "Final Representation: " << model->representation(optimised_params) <<std::endl <<std::endl;
+        csvIO.outputData(model->output_model(optimised_params, inputs), targets);
+    }
+
+    void exportData() {
+        csvIO.save_file(inputs, targets,model->output_model(optimised_params, inputs), model->representation(optimised_params));
     }
 
 private:
-  const std::vector<T>& inputs_;
-  const std::vector<T>& targets_;
-  std::shared_ptr<IModel<T>> model_;
-  std::shared_ptr<ILossFunction<T>> loss_function_;
-  std::shared_ptr<IFitMethod<T>> fit_method_;
+    CSVDataIO csvIO;
+    std::vector<double> inputs, targets;
+    std::shared_ptr<LossFunc> loss_func;
+    std::shared_ptr<Model> model;
+    std::shared_ptr<Optimiser> optimiser;
+    std::vector<value> initial_params, optimised_params;
+    size_t max_iterations;
+    double learning_rate;  
 };
 #endif

@@ -1,5 +1,6 @@
 #include "io.h"
-
+// CPP file implementing the IO functions
+// Choosing what type of import to do
 std::pair<std::vector<double>, std::vector<double>> CSVDataIO::importDataFromSource() 
 {
     std::string filename;
@@ -7,14 +8,13 @@ std::pair<std::vector<double>, std::vector<double>> CSVDataIO::importDataFromSou
     std::getline(std::cin, filename);
 
     if (filename.empty()) {
-        return manualInput();
+        return importData();
     } else {
         inputFile = filename;
         return importData(filename);
     }
 }
-
-
+// Importing from csv file
 std::pair<std::vector<double>, std::vector<double>> CSVDataIO::importData(const std::string& filename) {
     std::vector<double> column1;
     std::vector<double> column2;
@@ -32,17 +32,9 @@ std::pair<std::vector<double>, std::vector<double>> CSVDataIO::importData(const 
 
         // Read the first column
         if (std::getline(tokenStream, token, ',')) {
-            try {
-                double value = std::stod(token);
+            double value = parseToken(token);
+            if (!std::isnan(value)) {
                 column1.push_back(value);
-            } catch (const std::exception& e) {
-                // If it's the first or second line, it might be a header, so just skip it.
-                if (lineNumber <= 2) {
-                    ++lineNumber;
-                    continue;
-                } else {
-                    throw std::runtime_error("Invalid value in column 1 at line " + std::to_string(lineNumber));
-                }
             }
         } else {
             throw std::runtime_error("Missing value in column 1 at line " + std::to_string(lineNumber));
@@ -50,17 +42,9 @@ std::pair<std::vector<double>, std::vector<double>> CSVDataIO::importData(const 
 
         // Read the second column
         if (std::getline(tokenStream, token, ',')) {
-            try {
-                double value = std::stod(token);
+            double value = parseToken(token);
+            if (!std::isnan(value)) {
                 column2.push_back(value);
-            } catch (const std::exception& e) {
-                // If it's the first or second line, it might be a header, so just skip it.
-                if (lineNumber <= 2) {
-                    ++lineNumber;
-                    continue;
-                } else {
-                    throw std::runtime_error("Invalid value in column 2 at line " + std::to_string(lineNumber));
-                }
             }
         } else {
             throw std::runtime_error("Missing value in column 2 at line " + std::to_string(lineNumber));
@@ -81,8 +65,18 @@ std::pair<std::vector<double>, std::vector<double>> CSVDataIO::importData(const 
     return { column1, column2 };
 }
 
+//Helper function
+double CSVDataIO::parseToken(const std::string& token) {
+    try {
+        return std::stod(token);
+    } catch (const std::exception& e) {
+        // If we can't convert the token to a double, assume it's a header and return NaN
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+}
 
-std::pair<std::vector<double>, std::vector<double>> CSVDataIO::manualInput() {
+// Manual Importing
+std::pair<std::vector<double>, std::vector<double>> CSVDataIO::importData() {
     std::vector<double> column1;
     std::vector<double> column2;
 
@@ -148,8 +142,8 @@ std::pair<std::vector<double>, std::vector<double>> CSVDataIO::manualInput() {
     return { column1, column2 };
 }
 
-
-double CSVDataIO::calculateRSquared(const std::vector<double>& observed, const std::vector<double>& predicted)
+//statistics of R2 value
+double IStatistics::calculateRSquared(const std::vector<double>& observed, const std::vector<double>& predicted)
 {
     size_t size = observed.size();
     
@@ -180,7 +174,7 @@ double CSVDataIO::calculateRSquared(const std::vector<double>& observed, const s
 }
 void CSVDataIO::outputData(const std::vector<double>& observed, const std::vector<double>& predicted) {
     // Calculate R-squared
-    double rSquared = calculateRSquared(observed, predicted);
+    double rSquared = IStatistics::calculateRSquared(observed, predicted);
 
     size_t size = observed.size();
     
@@ -203,16 +197,12 @@ void CSVDataIO::outputData(const std::vector<double>& observed, const std::vecto
    
 }
 
+//Save file implementation
 void CSVDataIO::save_file(const std::vector<double>& input, const std::vector<double>& targets, const std::vector<double>& predicted, const std::string& representation)
 {
     std::string filename;
-
-    if (inputFile.empty()) {
-        std::cout << "Enter the filename to save the data: ";
-        std::getline(std::cin, filename);
-    } else {
-        filename = inputFile;  // Use the input filename
-    }
+    std::cout << "Enter the filename to save the data: ";
+    std::getline(std::cin, filename);
     std::ofstream file;
     file.open(filename);
     if (!file.is_open()) {
