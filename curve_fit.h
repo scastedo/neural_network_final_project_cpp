@@ -31,7 +31,7 @@ public:
     }
 
     void initialiseParams() {
-        initial_params.resize(model->num_params(), value{1});
+        initial_params.resize(model->num_params(), value{1}); //Initialises all parameters to 1
         std::cout << "============================================" << std::endl;
         std::cout << "Initial Representation: " << model->representation(initial_params) <<std::endl <<std::endl;
         csvIO.outputData(model->output_model(initial_params, inputs), targets);
