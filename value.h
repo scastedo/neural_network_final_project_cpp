@@ -26,7 +26,6 @@ class _value
     std::function<void()> _backward = [](){return;};
 
   public:
-  // can make constructors private???????????????????????????????
   // Constructors
   _value(const double&, const std::vector<std::shared_ptr<_value>>&); //param construct
   _value(const double&); //annother param construct
@@ -60,6 +59,7 @@ class _value
 // Publically facing value class
 class value
 { 
+  // Output value to terminal
   friend std::ostream& operator<<(std::ostream& os, const value&);
   // Scalar power 
   friend value pow(const value& val,  const double& exp_term)
@@ -76,18 +76,6 @@ class value
     };
     out.set_backward(_back);
     return out;
-    // auto out = value(std::pow(val.get_data(), exp_term), {val.get_ptr(),});
-
-    // _value* val_ptr = val.get_ptr().get();
-    // _value* out_ptr = out.get_ptr().get();
-
-    // auto _back = [=]()
-    // {
-    //     val_ptr->get_grad() += (exp_term * std::pow(val_ptr->get_data(), exp_term- 1)) * out_ptr->get_grad();
-    // };
-    // out.set_backward(_back);
-
-    // return out;
   }
   friend value exp(const value& val)
   {
@@ -147,7 +135,7 @@ friend value log(const value& val)
     const double& get_grad() const { return _ptr->get_grad();}
     double& get_data() { return _ptr->get_data(); }
     double& get_grad() { return _ptr->get_grad(); }
-    const std::vector<std::shared_ptr<_value>>& get_parents() const{return _ptr->get_parents();} // THIS WAS CHANGED... DIDNT USED TO BE CONST
+    const std::vector<std::shared_ptr<_value>>& get_parents() const{return _ptr->get_parents();}
     void zero_grad() const { _ptr->reset_grad(); }
     void zero_grad_all() const { _ptr->reset_all_grad(); }
     void set_backward(std::function<void()> func) const { _ptr->set_backward(func); }

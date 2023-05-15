@@ -2,6 +2,7 @@
 #define MOD_H
 #include "value.h"
 #include <string>
+// Interface of model
 template <typename T = double>
 class IModel {
   public:
@@ -9,6 +10,7 @@ class IModel {
     virtual value operator()(const std::vector<value>& params, const T& input) const = 0;
     virtual size_t num_params() const = 0;
     virtual std::string representation(const std::vector<value>& params) const = 0; // new method
+    // Defining the output of the data of the model. F(x) = Y
     std::vector<double> output_model(const std::vector<value>& parameters, const std::vector<double>& inputs) const
     {
       std::vector<double> outputs(inputs.size()); 
@@ -21,6 +23,7 @@ class IModel {
     }
 };
 namespace models{
+// defining the polynomial model
 template <typename T = double>
 class PolynomialModel : public IModel<T> {
   public:
@@ -28,8 +31,10 @@ class PolynomialModel : public IModel<T> {
     {
       degree_ = degree_validation(); 
     }
+    // Function that returns poly model
     value operator()(const std::vector<value>& params, const T& input) const override
     {
+      // Extra error check
       if(params.size() != num_params())
       {
         throw std::invalid_argument("Incorrect number of parameters for PolynomialModel");
@@ -44,12 +49,12 @@ class PolynomialModel : public IModel<T> {
       }
       return result;
     }
-
+    //Returns number of paraeters
     size_t num_params() const override
     {
       return degree_ + 1;
     }
-
+    // Representing model to csv file and terminal
     std::string representation(const std::vector<value>& params) const override
     {
       std::string result;
@@ -79,6 +84,7 @@ class PolynomialModel : public IModel<T> {
     }
   private:
     size_t degree_;
+    //Determining polynomial degree
     size_t degree_validation()
     {
       std::cout<<"Enter Degree of Polynomial: ";
@@ -98,10 +104,12 @@ class PolynomialModel : public IModel<T> {
 
 };
 
+//Implementing exponential model
 template <typename T = double>
 class ExponentialModel : public IModel<T>
 {
   public:
+    //Giving function of exponential model
     value operator()(const std::vector<value>& params, const T& input) const override
     {
       if(params.size() != num_params())
@@ -111,10 +119,12 @@ class ExponentialModel : public IModel<T>
       value input_val{static_cast<double>(input)};
       return params[0] * exp(params[1] * input_val);
     }
+    //Returning number of parameters
     size_t num_params() const override
     {
       return 2; // Base and exponent
     }
+    //Printing representation
     std::string representation(const std::vector<value>& params) const override
     {
       return std::to_string(params[0].get_data()) + " * e^(" + std::to_string(params[1].get_data()) + " * x)";
@@ -125,6 +135,7 @@ template <typename T = double>
 class LogisticModel : public IModel<T>
 {
   public:
+    //Giving function of logistic model
     value operator()(const std::vector<value>& params, const T& input) const override
     {
       if(params.size() != num_params())
@@ -138,6 +149,7 @@ class LogisticModel : public IModel<T>
     {
       return 3; // Maximum value, growth rate, and midpoint
     }
+    //Representation
     std::string representation(const std::vector<value>& params) const override
     {
       return std::to_string(params[0].get_data()) + " / (1 + e^-(" + std::to_string(params[1].get_data()) + " * (x - " + std::to_string(params[2].get_data()) + ")))";

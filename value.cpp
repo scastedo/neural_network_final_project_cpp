@@ -42,12 +42,6 @@ std::vector<_value*> _value::build_topo()
     _build_topo(this);
     return sorted_nodes;
 }
-
-// ADDING LEARNING RATES
-void _value::descend_grad(const double& learning_rate)
-  {
-      _data -= learning_rate * _grad;
-  }
 // BACKPROPOGATION
 void _value::backward()
 {
@@ -86,18 +80,9 @@ value& value::operator=(value&& other) //move assignment
 }
 
 
-value value::operator+(const value& other) const /// CHANGED FROM STANDARD ONE WITH WEAK POINTERS
+value value::operator+(const value& other) const
 {
     value out(get_data() + other.get_data(), {get_ptr(), other.get_ptr()}); // adds values and adds parents 
-
-    // _value* this_ptr = get_ptr().get();
-    // _value* other_ptr = other.get_ptr().get();
-    // _value* out_ptr = out.get_ptr().get();
-    // auto _back = [=]()
-    // {
-    //     this_ptr->get_grad() += out_ptr->get_grad();
-    //     other_ptr->get_grad() +=  out_ptr->get_grad();
-    // };
 
     //Setting up the backward function for later use
     std::weak_ptr<_value> this_weak_ptr = get_ptr();
@@ -134,18 +119,10 @@ value value::operator+=(const double& other)
 }
 
 
-value value::operator-(const value& other) const /// CHANGED FROM STANDARD ONE WITH WEAK POINTERS
+value value::operator-(const value& other) const 
 {
     auto out = value(get_data() - other.get_data(), {get_ptr(), other.get_ptr()});
     
-    // _value* this_ptr = get_ptr().get();
-    // _value* other_ptr = other.get_ptr().get();
-    // _value* out_ptr = out.get_ptr().get();
-    // auto _back = [=]()
-    // {
-    //     this_ptr->get_grad() += out_ptr->get_grad();
-    //     other_ptr->get_grad() += out_ptr->get_grad();
-    // };
 
     std::weak_ptr<_value> this_weak_ptr = get_ptr();
     std::weak_ptr<_value> other_weak_ptr = other.get_ptr();
@@ -181,18 +158,10 @@ value value::operator-=(const double& other)
     return *this;
 }
 
-value value::operator*(const value& other) const/// CHANGED FROM STANDARD ONE WITH WEAK POINTERS
+value value::operator*(const value& other) const
 {
     auto out = value(get_data() * other.get_data(),{get_ptr(), other.get_ptr()});
 
-    // _value* this_ptr = get_ptr().get();
-    // _value* other_ptr = other.get_ptr().get();
-    // _value* out_ptr = out.get_ptr().get();
-    // auto _back = [=]()
-    // {
-    //     this_ptr->get_grad() += other_ptr->get_data() * out_ptr->get_grad();
-    //     other_ptr->get_grad() += this_ptr->get_data() * out_ptr->get_grad();
-    // };
 
     std::weak_ptr<_value> this_weak_ptr = get_ptr();
     std::weak_ptr<_value> other_weak_ptr = other.get_ptr();

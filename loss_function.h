@@ -6,6 +6,7 @@
 #include <vector>
 #include <sstream>
 #include "value.h"
+//Interface of the loss functions
 template <typename T = double>
 class ILossFunction
 {
@@ -15,6 +16,7 @@ class ILossFunction
 };
 namespace loss_functions{
 
+//Implementation of the MSE loss function
 template <typename T=double>
 class MSE: public ILossFunction<T>
 {
@@ -45,7 +47,7 @@ class HuberLoss: public ILossFunction<T>
         }
     private:
         value huber_delta_{};
-    
+        //Have to determine additional parameter
         double huber_validation()
         {
             double input;

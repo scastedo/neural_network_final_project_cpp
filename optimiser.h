@@ -3,7 +3,7 @@
 #include "value.h"
 #include "model.h"
 #include <iomanip>
-
+//Interface of optimiser functions
 template <typename T = double>
 class IFitMethod 
 {
@@ -11,18 +11,19 @@ class IFitMethod
     virtual std::vector<value>& fit(std::vector<value>& params, size_t iterations, double learning_rate, const std::vector<T>& inputs, const std::vector<T>& targets, std::shared_ptr<IModel<T>> model, std::shared_ptr<ILossFunction<T>> loss_function) = 0;
 
   protected:
-      value compute_loss_and_zero_grads(std::vector<value>& params, const std::vector<T>& inputs, const std::vector<T>& targets, std::shared_ptr<IModel<T>> model, std::shared_ptr<ILossFunction<T>> loss_function) const
-      {
-          for (auto &param : params) { param.zero_grad_all(); }
-          value loss{0};
-          for(size_t j = 0; j < inputs.size(); j++)
-          {
-              value model_output = (*model)(params, inputs[j]);
-              loss += (*loss_function)(model_output, targets[j]);
-          }
-          loss /= (static_cast<double>(inputs.size()));
-          return pow(loss,0.5);
-      }
+    //Performs forward pass of computation, something which is common to all optimisation algorithms
+    value compute_loss_and_zero_grads(std::vector<value>& params, const std::vector<T>& inputs, const std::vector<T>& targets, std::shared_ptr<IModel<T>> model, std::shared_ptr<ILossFunction<T>> loss_function) const
+    {
+        for (auto &param : params) { param.zero_grad_all(); }
+        value loss{0};
+        for(size_t j = 0; j < inputs.size(); j++)
+        {
+            value model_output = (*model)(params, inputs[j]);
+            loss += (*loss_function)(model_output, targets[j]);
+        }
+        loss /= (static_cast<double>(inputs.size()));
+        return pow(loss,0.5);
+    }
       void print_progress_bar(size_t total, size_t current, double loss) const
       {
         const size_t bar_length = 50;  // The number of boxes for 100%
@@ -60,6 +61,7 @@ class IFitMethod
       }
 };
 namespace optimisers{
+// Implementation of standard optimiser
 template <typename T = double>
 class GradientDescentFit: public IFitMethod<T> {
 public:
@@ -67,7 +69,9 @@ public:
         value loss;
         for (size_t i = 0; i < iterations; ++i) 
         {
+            //Forward pass
             loss = this->compute_loss_and_zero_grads(params, inputs, targets, model, loss_function);
+            // Backward pass using value class
             loss.backward();
 
             // Update parameters
@@ -77,11 +81,13 @@ public:
             }
             this->print_progress_bar(iterations, i, loss.get_data());
         }
+        //Print the last iteration
         this->print_progress_bar(iterations, iterations, loss.get_data()); // Print at 100%
         return params;
     }
 };
 
+//Implementing adamfit algorithm
 template <typename T = double>
 class AdamFit: public IFitMethod<T> {
 public:
@@ -93,6 +99,7 @@ public:
 
     for (size_t i = 0; i < iterations; ++i)
     {
+      //Forward and backward pass
       loss = this->compute_loss_and_zero_grads(params, inputs, targets, model, loss_function);
       loss.backward();
 
@@ -107,6 +114,7 @@ public:
       }
       this->print_progress_bar(iterations, i, loss.get_data());
     }
+    //Print the last iteration
     this->print_progress_bar(iterations, iterations, loss.get_data()); // Print at 100%
     return params;
     }

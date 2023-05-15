@@ -54,7 +54,7 @@ std::pair<std::vector<double>, std::vector<double>> CSVDataIO::importData(const 
     }
 
     file.close();
-
+    // Error checking after read in
     if (column1.size() != column2.size()) {
         throw std::runtime_error("Columns have different lengths");
     }
@@ -65,7 +65,7 @@ std::pair<std::vector<double>, std::vector<double>> CSVDataIO::importData(const 
     return { column1, column2 };
 }
 
-//Helper function
+//Helper function for read in
 double CSVDataIO::parseToken(const std::string& token) {
     try {
         return std::stod(token);
@@ -130,7 +130,7 @@ std::pair<std::vector<double>, std::vector<double>> CSVDataIO::importData() {
             continue;
         }
     }
-
+    // Additional validation
     if (column1.size() != column2.size()) {
         throw std::runtime_error("Columns have different lengths");
     }
@@ -172,6 +172,7 @@ double IStatistics::calculateRSquared(const std::vector<double>& observed, const
     
     return rSquared;
 }
+
 void CSVDataIO::outputData(const std::vector<double>& observed, const std::vector<double>& predicted) {
     // Calculate R-squared
     double rSquared = IStatistics::calculateRSquared(observed, predicted);

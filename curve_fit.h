@@ -1,8 +1,10 @@
 #ifndef CURV_H
 #define CURV_H
+//Interface of all the components. Makes the main programme much cleaner
 template <typename LossFunc, typename Model, typename Optimiser>
 class CurveFitProgram {
 public:
+//Constructor
   CurveFitProgram(size_t iter, double lr) : 
     loss_func(std::make_shared<LossFunc>()),
     model(std::make_shared<Model>()),
@@ -14,12 +16,14 @@ public:
             throw std::invalid_argument("Invalid parameters for CurveFitProgram");
         }
     }
+//Defining run function that does everything
     void run() {
         importData();
         initialiseParams();
         fitCurve();
         exportData();
     }
+// Individual components of fitting procedure that can be called independently
     void importData() {
         std::pair<std::vector<double>, std::vector<double>> importedData = csvIO.importDataFromSource();
         inputs = importedData.first;
@@ -34,7 +38,7 @@ public:
         initial_params.resize(model->num_params(), value{1}); //Initialises all parameters to 1
         std::cout << "============================================" << std::endl;
         std::cout << "Initial Representation: " << model->representation(initial_params) <<std::endl <<std::endl;
-        csvIO.outputData(model->output_model(initial_params, inputs), targets);
+        csvIO.outputData(model->output_model(initial_params, inputs), targets); //Outputs the initial 'bad' model
     }
 
     void fitCurve() {

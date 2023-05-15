@@ -3,10 +3,8 @@ CFLAGS = -W -Wall -Wshadow -pedantic -std=c++17
 SRCS = value.cpp io.cpp main.cpp
 RM = del -rf
 
-OBJS = $(SRCS:.cpp=.o) # fichiers objets
+OBJS = $(SRCS:.cpp=.o) 
 
-
-# Complèter la première règle => pour l'exécutable
 a.out : $(OBJS)
 	$(CPPC) $(OBJS)
 
@@ -19,7 +17,6 @@ io.o: io.cpp value.h loss_function.h model.h optimiser.h curve_fit.h
 main.o: main.cpp value.h loss_function.h model.h optimiser.h curve_fit.h
 	$(CPPC) -c $(CFLAGS) $<
 
-# Exemples de règles pour le ménage
 clean :
 	$(RM) $(OBJS)
 
